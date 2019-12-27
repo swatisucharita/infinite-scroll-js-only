@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Infinite scroll</title>
+        <style>
+          #star { border: 1px solid black; padding: 5px; width: 45%; margin: 10px; display: inline-block; }
+          #loader {
+            width: 100%;
+            height: 70px;
+            text-align: center;
+          }
+        </style>
+    </head>
+    <body>
+        <div id="app">
+            <div id="list-container">
+                <h3>May The Force Be With You!</h3>
+                <div id="list"></div>
+                <div id="loader">Load More</div>
+            </div>
+        </div>
+    </body>
+    <script>
+        const attributes = [
+            {name: 'name', label: 'Name'},
+            {name: 'height', label: 'Height'},
+            {name: 'mass', label: 'Weight (kgs)'},
+            {name: 'hair_color', label: 'Hair Color'},
+            {name: 'skin_color', label: 'Skin Color'},
+            {name: 'eye_color', label: 'Eye Color'},
+            {name: 'birth_year', label: 'Birth Year'},
+            {name: 'gender', label: 'Gender'}
+        ];
+        const listContainer = document.getElementById('list');
+        list = '';
+        var starsUrl = 'https://www.swapi.co/api/people';
+        var isFetching = false;
+        let loadMore = (entries) => {
+            const target = entries[0];
+            if (target.isIntersecting) {
+                !isFetching && fetchStars()
+            }
+        }
+        function fetchStars() {
+            isFetching = true;
+            fetch(starsUrl)
+            .then(response => {
+                return response.json();
+            })
+            .then(data => {
+                isFetching = false;
+                starsUrl = data.next;
+                const stars = data.results || []; 
+                stars.forEach(star => {
+                    list += `<div id="star">
+                            <h5>${star.name}</h5>
+                            ${attributes.reduce((result, attr) => {
+                                result += '<div><span>' + attr.label +': </span><span>'+ star[attr.name] +'</span></div>';
+                                return result;
+                            }, '')}
+                            <div></div>
+                        </div>`;
+                });
+                listContainer.innerHTML = list;
+            })
+            .catch(err => { isFetching = false;})
+        }
+        fetchStars();
+
+        let options = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 1.0
+        };
+
+        let observer = new IntersectionObserver(loadMore, options);
+        let target = document.querySelector('#loader');
+        observer.observe(target);
+    </script>
+</html>
